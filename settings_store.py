@@ -23,6 +23,11 @@ def validate_settings_depth(value, maximum=64):
 
 @contextmanager
 def settings_lock(path, timeout=2):
+    """Serialize cooperating processes so they cannot overwrite concurrent changes.
+
+    The lock is advisory and does not protect against older or external writers
+    that ignore it. Timeout raises OSError instead of waiting indefinitely.
+    """
     if os.name == 'nt':
         import msvcrt
     else:

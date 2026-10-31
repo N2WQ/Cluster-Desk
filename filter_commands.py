@@ -67,6 +67,7 @@ SPIDER_FILTERS = {
 
 
 def spider_expression(category, value):
+    """Translate a supported UI criterion into a safe DXSpider filter expression."""
     if category not in SPIDER_FILTERS: raise ValueError('Choose a supported spot filter.')
     value = value.strip()
     if not value or len(value) > 200 or any(not 32 <= ord(char) <= 126 for char in value):
@@ -127,6 +128,7 @@ SPIDER_COMMON_CATEGORIES = ('Advanced expression', 'Spotter callsign text', 'Spo
 
 
 def spider_categories(stream):
+    """Offer filter criteria appropriate to the selected DXSpider traffic stream."""
     if stream not in SPIDER_STREAMS: raise ValueError('Choose a supported traffic type.')
     if stream == 'Spots': return SPIDER_SPOT_CATEGORIES
     if stream == 'RBN spots': return SPIDER_SPOT_CATEGORIES + ('Minimum skimmers', 'Minimum RBN strength')
@@ -134,6 +136,11 @@ def spider_categories(stream):
 
 
 def filter_command(dialect, action, text='', line=None, category='Keywords', stream='Spots', band='All bands'):
+    """Build a supported node filter command without sending or applying it.
+
+    Validation prevents unsupported combinations and unintended command
+    separators. A returned command still needs node acceptance and readback.
+    """
     if dialect == 'CC Cluster':
         if action == 'reset_all': return 'set/nofilter'
         if category not in CC_FILTERS: raise ValueError('Choose a supported filter.')

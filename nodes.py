@@ -8,12 +8,14 @@ DEFAULT_NODES = (
 
 
 def validate_login_call(value):
+    """Normalize a user-entered login callsign and reject unsafe characters."""
     if not isinstance(value,str) or not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9/-]{0,31}',value.strip()):
         raise ValueError('Enter a callsign starting with a letter or number, using only letters, numbers, / or -.')
     return value.strip().upper()
 
 
 def validate_node(name, host, port):
+    """Return a validated saved endpoint, or explain why it cannot be used."""
     name = name.strip(); host = host.strip()
     if not name or len(name) > 60 or any(ord(c) < 32 for c in name):
         raise ValueError('Enter a name of up to 60 characters.')
@@ -28,6 +30,7 @@ def validate_node(name, host, port):
 
 
 def load_nodes(value):
+    """Restore a bounded list of distinct valid endpoints from saved settings."""
     if not isinstance(value, list): return [dict(item) for item in DEFAULT_NODES]
     result = []; names = set()
     for item in value[:50]:

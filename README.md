@@ -14,6 +14,8 @@ Experimental macOS downloads are also available for Apple silicon and Intel. The
 
 Use Python 3 with Tkinter on Windows and run `python app.py`. The optional serial logger feature requires `pyserial`. Source mode stores settings in `settings.json` beside the source; this file is excluded from version control.
 
+See [CODE-GUIDE.md](CODE-GUIDE.md) for an overview of the main modules, spot flow, and important boundaries.
+
 ## Build the Windows executable
 
 From PowerShell in this directory:
@@ -28,4 +30,4 @@ The executable is written to `dist\ClusterDesk.exe`.
 
 ## Tests
 
-Run focused tests with `python -m unittest test_spot_submission`, for example. Some reference-comparison tests require local VE7CC or DXSpider reference files that are not included here. A full local run of beta 183 had two Enter-key UI test failures; these tests passed separately, and the cause has not been established.
+Run focused tests with `python -m unittest test_spot_submission`, for example. Some reference-comparison tests require local VE7CC or DXSpider reference files and helper scripts from the development workspace that are not included here. A full local run of beta 183 had two Enter-key UI test failures; these tests passed separately, and the cause has not been established.

@@ -11,12 +11,15 @@ from mail_compose import MailCompose
 
 
 class TelnetDecoder:
+    """Separate cluster text from Telnet negotiation, including split packets."""
     def __init__(self):
+        """Keep negotiation state between successive socket reads."""
         self.state = 'data'
         self.command = 0
         self.after_cr = False
 
     def feed(self, data):
+        """Return application bytes and negotiation replies without losing partial commands."""
         output, reply = bytearray(), bytearray()
         def append_data(byte):
             if self.after_cr and byte == 0:
@@ -48,6 +51,7 @@ class TelnetDecoder:
 
 @dataclass(frozen=True)
 class Spot:
+    """Preserve a received spot and optional node metadata for display and recording."""
     spotter: str
     frequency: str
     dx: str
@@ -183,6 +187,7 @@ SPIDER_SETTING_RESPONSES = {
 
 
 def setting_command(dialect, name, enabled):
+    """Map a supported UI setting to its node-specific enable or disable command."""
     commands = SETTING_COMMANDS if dialect == 'CC Cluster' else SPIDER_SETTING_COMMANDS if dialect == 'DXSpider' else {}
     if name not in commands or not isinstance(enabled, bool):
         raise ValueError('This setting cannot be changed through this control.')
@@ -190,6 +195,7 @@ def setting_command(dialect, name, enabled):
 
 
 def parse_spider_setting(line, call):
+    """Accept a known DXSpider settings response only for the current callsign."""
     match = re.fullmatch(r'\s*(DX Spots|Announces|Talk|WWV|WCY|WX|DX CQ Zones|DX ITU Zones|DX Grid|US State display|AnnTalk) (enabled|disabled)(?: for)? ([A-Za-z0-9/-]+)\s*', line, re.I)
     if not match or match.group(3).upper() != call.upper(): return None
     name = next(key for key in SPIDER_SETTING_RESPONSES if key.casefold() == match.group(1).casefold())
@@ -197,6 +203,7 @@ def parse_spider_setting(line, call):
 
 
 def spot_command(frequency, call, comment, test=False, *, dialect=''):
+    """Validate a spot and construct one node command, preventing injected lines."""
     frequency = frequency.strip(); call = call.strip(); comment = comment.strip()
     if not call.isascii(): raise ValueError('Enter the DX callsign using ASCII letters, numbers, / or -.')
     call = call.upper()
@@ -263,6 +270,11 @@ def spider_history_country_command(field, text):
 
 
 def history_command(dialect, call, mode='Callsign', count=30, days_ago=None):
+    """Build a bounded history request using the selected cluster dialect's syntax.
+
+    The node chooses the returned records; this request does not guarantee a
+    complete history. Invalid or unsupported inputs raise ValueError.
+    """
     if dialect not in ('CC Cluster', 'DXSpider'): raise ValueError('This node type is not supported for history lookup.')
     if isinstance(count, bool) or not re.fullmatch(r'[0-9]{1,3}',str(count)) or not 1 <= int(count) <= 100:
         raise ValueError('Choose a spot count from 1 to 100.')
@@ -312,6 +324,7 @@ def frequency_history_command(dialect, text):
 
 
 def parse_setting(line):
+    """Recognize supported CC Cluster setting readbacks without guessing unknown fields."""
     match = SETTING.match(line)
     if not match: return None
     name, value = match.groups()
@@ -320,6 +333,11 @@ def parse_setting(line):
 
 
 def parse_spot(line, dialect=''):
+    """Normalize supported wire and text spots while retaining available metadata.
+
+    Return None for unrecognized or invalid records. Country identifiers in
+    CC11 records are interpreted as DXSpider values only for that dialect.
+    """
     packet = line.rstrip('\r\n').lstrip()
     if packet.startswith('CC11^'):
         fields = packet.split('^')
@@ -373,8 +391,14 @@ class CommandRateLimitError(OSError):
 
 
 class Connection:
+    """Own one cluster session and deliver its events to the supplied callback.
+
+    Socket work happens in a worker thread. Commands are bounded and queued;
+    a successful enqueue does not mean the remote node accepted a command.
+    """
     """A single-use session. The worker owns all socket reads and writes."""
     def __init__(self, emit):
+        """Create an inactive session; start() begins its worker."""
         self.emit = emit
         self.stop = threading.Event()
         self.commands = queue.Queue(maxsize=100)
@@ -390,6 +414,7 @@ class Connection:
         self.pending_commands = 0
 
     def _check_command_budget(self, count):
+        """Reject commands that exceed the local DXSpider pacing budget."""
         # Caller holds lock. Include queued and in-flight commands so their
         # eventual send cannot bunch up after the admission window has moved.
         now = time.monotonic()
@@ -399,16 +424,19 @@ class Connection:
             raise CommandRateLimitError('DXSpider command limit reached. Wait before trying again.')
 
     def _command_sent(self, *, queued, count=1):
+        """Keep pending and pacing counts aligned with commands sent by the worker."""
         with self.lock:
             if queued: self.pending_commands -= count
             if self.dialect == 'DXSpider': self.command_times.extend([time.monotonic()] * count)
 
     def start(self, host, port, call):
+        """Begin a single connection attempt without blocking the UI thread."""
         if self.thread is not None: raise RuntimeError('Session already started')
         self.thread = threading.Thread(target=self._run, args=(host, port, call), daemon=True)
         self.thread.start()
 
     def _run(self, host, port, call):
+        """Drive login, Telnet input, outbound commands and shutdown for this session."""
         sock = None
         password_sent = False; state = 'login'; mail = None; mail_deadline = None
         try:
@@ -526,6 +554,7 @@ class Connection:
             self.emit('status', 'Disconnected')
 
     def provide_password(self, password):
+        """Supply a password only to a currently waiting login, without persisting it."""
         if not self.password_requested.is_set() or self.stop.is_set(): raise OSError('The password request is no longer active.')
         if not password or len(password) > 200 or any(ord(c) < 32 or ord(c) == 127 for c in password):
             raise ValueError('Enter a password without control characters, up to 200 characters.')
@@ -534,14 +563,17 @@ class Connection:
         except queue.Full: raise OSError('A password has already been submitted.')
 
     def send(self, command):
+        """Queue one validated command; acceptance by the node remains unconfirmed."""
         self.send_batch((command,))
 
     def send_tracked(self, command):
+        """Queue a command with an identity callers can use to track send events."""
         tracked = TrackedCommand(command)
         self.send_batch((tracked,))
         return tracked
 
     def send_batch(self, commands):
+        """Queue a bounded group atomically, respecting session state and pacing limits."""
         commands = tuple(commands)
         if not 1 <= len(commands) <= 10: raise ValueError('Queue between 1 and 10 commands.')
         for command in commands:
@@ -559,6 +591,7 @@ class Connection:
             self.pending_commands += count
 
     def send_mail(self, recipient, subject, body, dialect='DXSpider', *, bulletin=False, receipt=False):
+        """Reserve the connection for an interactive mail exchange until it finishes."""
         mail=MailCompose(recipient,subject,body,dialect,bulletin=bulletin,receipt=receipt)
         with self.lock:
             if self.stop.is_set() or self.sock is None or not self.ready: raise OSError('Not connected')
@@ -570,6 +603,7 @@ class Connection:
             self.mail_busy=True
 
     def close(self):
+        """Request worker shutdown and interrupt any active socket read."""
         self.stop.set()
         with self.lock:
             if self.sock:

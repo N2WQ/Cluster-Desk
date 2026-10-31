@@ -381,6 +381,7 @@ class App(tk.Tk):
                 'call': saved_call, 'local_grid': self.local_grid.get(), 'auto_reconnect': self.auto_reconnect.get(), 'auto_start': self.auto_start.get(), 'auto_open_talk': self.auto_open_talk.get(), 'alarm': self.alarm_config, 'nodes': self.saved_nodes, 'talk_lists': self.talk_lists, 'hidden_bands': sorted(self.hidden_bands), 'color_bands': self.color_bands, 'hide_duplicate_spots': self.hide_duplicate_spots, 'spot_marker_filter': self.spot_marker_filter, 'spot_hidden_text': dict(self.spot_hidden_text), 'logger_ignore_bye': self.logger_ignore_bye.get(), 'logger_spots_only': self.logger_spots_only.get(), 'text_categories_version': 2, 'logger_text_categories': sorted(self.logger_text_categories), 'logger_spot_bands': sorted(self.logger_spot_bands), 'logger_port': self.logger_port.get().strip(), 'serial_port': self.serial_port.get().strip(), 'serial_baud': self.serial_baud.get().strip(), 'serial_ignore_bye': self.serial_ignore_bye.get(), 'serial_spots_only': self.serial_spots_only.get(), 'serial_local_echo': self.serial_local_echo.get(), 'serial_text_categories': sorted(self.serial_text_categories), 'serial_spot_bands': sorted(self.serial_spot_bands)}
 
     def _save_settings(self):
+        """Persist UI choices without silently overwriting another instance's changes."""
         try:
             local=deepcopy(self._settings_snapshot())
             category_group=('text_categories_version','logger_text_categories','serial_text_categories')
@@ -1329,6 +1330,7 @@ class App(tk.Tk):
                                    image=self.ui_icons[('stop' if active else 'play')+('_dark' if self.dark_theme.get() else '')],style='TButton', state='normal')
 
     def connect(self):
+        """Validate and start the main node session, keeping relevant prior spots."""
         try:
             node=validate_node('Main node',self.host.get(),self.port.get())
             host=node['host'];port=node['port'];call=validate_login_call(self.call.get())
@@ -1350,6 +1352,7 @@ class App(tk.Tk):
         self._start_connection()
 
     def start_secondary_node(self, host, port, call, auto_reconnect=False):
+        """Add a distinct additional connection within the supported session limit."""
         node=validate_node('Additional node',host,port);host=node['host'];port=node['port'];call=validate_login_call(call)
         source=(host.casefold(),port,call)
         if len(self.secondary_nodes)>=3: raise ValueError('Remove an additional node before adding another; the limit is three.')
@@ -1374,6 +1377,7 @@ class App(tk.Tk):
             except (ValueError,OSError) as exc:self.append(f'\nCould not start additional node {item["host"]}:{item["port"]}: {exc}\n')
 
     def _start_secondary_attempt(self, ident):
+        """Start a new attempt for an additional node, invalidating stale events."""
         item=self.secondary_nodes.get(ident)
         if not item or self.closing:return
         self.interrupt_secondary_manual_commands(item)
@@ -1825,6 +1829,7 @@ class App(tk.Tk):
         self.render_secondary_activity(item)
 
     def poll_secondary_nodes(self):
+        """Apply additional-node worker events to UI state on the Tk thread."""
         changed=False;refresh=False;activity_changed=set();filter_changed=set();messages_changed=False;reports_changed=False
         for ident,item in list(self.secondary_nodes.items()):
             if item['overflow'].is_set():
@@ -2073,6 +2078,7 @@ class App(tk.Tk):
         connection.start(host,port,call)
 
     def disconnect(self):
+        """Stop the main session and its retry without disconnecting additional nodes."""
         self.command_history.clear();self.command_history_index=None;self.command_history_draft=''
         self.interrupt_manual_commands()
         self.interrupt_spot_submissions()
@@ -2283,6 +2289,11 @@ class App(tk.Tk):
         self.connection.send(command)
 
     def open_spot(self):
+        """Offer a validated spot submission tied to the chosen connection instance.
+
+        A reconnect invalidates the form. Sending queues a command; the node's
+        activity must be checked to determine whether it accepted the spot.
+        """
         targets={}
         for label,(ident,epoch,connection) in self.report_targets.items():
             dialect=self.dialect if ident is None else self.secondary_nodes[ident]['dialect']
@@ -2340,6 +2351,7 @@ class App(tk.Tk):
         ttk.Button(buttons, textvariable=send_label, style='Accent.TButton', command=submit).pack(side='right', padx=(0, 8))
 
     def refresh_spots(self):
+        """Ask a chosen connected node for recent history without clearing the list."""
         targets=dict(self.report_targets)
         if not targets:
             messagebox.showerror('Refresh spots','Connect to a cluster first.',parent=self);return
@@ -3605,6 +3617,7 @@ class App(tk.Tk):
         self.open_filter_readback()
 
     def open_filter_readback(self):
+        """Request node filter settings so the operator can inspect actual readback."""
         if self.filter_window is None or not self.filter_window.winfo_exists():
             self.filter_window = tk.Toplevel(self); self.filter_window.title('Node filter readback'); self.filter_window.transient(self);self.filter_window.configure(bg=self.theme_bg)
             panel=ttk.Frame(self.filter_window, padding=16); panel.pack(fill='both', expand=True)
@@ -3960,6 +3973,7 @@ class App(tk.Tk):
         self.update_setting_actions()
 
     def clear_spots(self):
+        """Clear retained display spots without changing node filters or recordings."""
         self.rows.clear(); self.spot_times.clear(); self.spot_sources.clear(); self.render_spots()
         self.clear_spot_recovery_notice()
 
@@ -4087,6 +4101,7 @@ class App(tk.Tk):
         self.recent_connected_sources.append(source)
 
     def refresh_spot_source_filter(self):
+        """Keep the source selector aligned with active and retained spot sources."""
         sources={source for source in self.spot_sources.values() if source}
         if self.connection_target:
             host,port,call=self.connection_target;sources.add((host.casefold(),port,call))
@@ -4167,6 +4182,7 @@ class App(tk.Tk):
         return ident
 
     def add_spot(self, spot, source=None):
+        """Ingest a spot into bounded UI state and associated user-enabled outputs."""
         source = self.spot_source if source is None else source
         ident=self.insert_spot_row(spot,source)
         if self.spot_log: self.spot_log.publish(spot, source)
@@ -4485,6 +4501,11 @@ class App(tk.Tk):
         self.spot_search_status()
 
     def search_connected_nodes(self, event=None):
+        """Request node history for the current search when the user presses Enter.
+
+        The local search and display filters still apply, and node history may
+        be incomplete or overlap with retained spots.
+        """
         self.cancel_pending_spot_searches()
         query=self.search.get().strip()
         if not query:
@@ -4560,6 +4581,7 @@ class App(tk.Tk):
         return 'break'
 
     def render_spots(self, preserve_anchor=False):
+        """Refresh the visible table from retained spots and current display choices."""
         selection = self.spots.selection(); position = self.spots.yview()[0]
         current = self.spots.get_children(); anchor = ''
         if preserve_anchor and current and (position > 0 or self.spot_view_locked.get()):
@@ -4791,6 +4813,7 @@ class App(tk.Tk):
         self.transcript.configure(state='disabled')
 
     def poll(self):
+        """Apply main-session worker events on the Tk thread and schedule the next poll."""
         if self.connection_overflow and self.connection_overflow.is_set():
             self.command_history.clear();self.command_history_index=None;self.command_history_draft=''
             self.interrupt_manual_commands()
@@ -5066,6 +5089,7 @@ class App(tk.Tk):
         self.poll_after = self.after(delay,self.poll)
 
     def quit_app(self):
+        """Stop sessions and finish any active recording before closing the window."""
         if self.closing: return
         self.closing = True
         self.cancel_pending_spot_searches()
