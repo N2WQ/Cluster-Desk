@@ -1,0 +1,30 @@
+CLUSTER DESK BY N2WQ — BETA QUICK START
+
+Cluster Desk is a standalone Windows app in development. It is not yet a
+complete replacement for VE7CC. Use it for evaluation alongside your
+existing operating tools.
+
+1. Extract the ZIP to a folder and open ClusterDesk.exe on 64-bit Windows.
+   Python is not required.
+2. Enter your own amateur-radio callsign. The default server is
+   dxc.n2wq.com, port 7300 (CC Cluster). For the supplied DXSpider node,
+   enter dxs.n2wq.com, port 7300.
+3. Select Connect. Received spots appear on the DX spots tab. Select a row
+   to see its details. The same button becomes Disconnect.
+4. Select band buttons to show one or more bands. Select All to return to
+   the saved display options. The moon / sun button changes the theme.
+5. Type in Search to filter displayed spots. Press Enter to request matching
+   history from the selected source, or from all connected supported nodes.
+   Nodes may return incomplete history; display filters still apply.
+6. The Filters tab changes what the node sends to your account. Review the
+   settings with Show node filters before and after making a change. Some
+   DXSpider nodes do not have the USDB data needed for state filtering.
+   Look up node state asks the node for a callsign and opens Activity.
+
+The post-spot and message controls send real requests to the selected node.
+The Activity tab shows responses and errors. For button names, hover over
+the icons. See BETA-GUIDE.txt for detailed features, limits, and troubleshooting.
+
+For a beta report, include your Windows version, the node and action involved,
+what happened, and the executable fingerprint from Settings > About this build.
+Do not include passwords or private account information.

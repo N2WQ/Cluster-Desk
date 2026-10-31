@@ -1,0 +1,218 @@
+CLUSTER DESK BY N2WQ — BETA DEMO
+
+This is an early standalone Windows app inspired by VE7CC / CC User.
+It is not yet a complete replacement. Use it for evaluation, not as your
+only operating tool.
+
+GET STARTED
+1. Extract the ZIP and open ClusterDesk.exe on 64-bit Windows.
+2. Enter your own amateur-radio callsign. Start with a letter or number; use
+   only letters, numbers, / and -. Do not share another user's call.
+3. The default server is dxc.n2wq.com, port 7300 (CC Cluster). To use the
+   supplied DXSpider node, enter dxs.n2wq.com and port 7300 instead.
+4. Select Connect. The same button changes to Disconnect and can cancel a
+   connection or retry. The DX spots tab displays recognized spots. Select a row
+   for details. The Activity tab shows node messages and command responses.
+   Press Ctrl+F to open the spot view and focus its search field.
+   Search filters retained spots as you type. All fields includes the displayed
+   date, time and band. Press Enter to queue history
+   searches for the selected connected source, or all supported connected
+   clusters when All sources is selected. Search treats text literally.
+   DXSpider can directly search for text in DX calls, spotters, comments and
+   origins, including phrases. On CC Cluster, DX-call Search also checks
+   recent node-filtered spots for partial matches. Some searches are limited
+   to up to 100 recent node-filtered spots; the node may return fewer, and
+   older or filtered spots may be missing. Date and time text are matched
+   locally against recent returned spots; they are not direct node date searches.
+   Band labels such as 20 m or 70 cm (also 20m or 70cm) request that band's
+   history. Bare numbers are treated as other search text, not as band labels.
+   Results can arrive later, duplicate
+   spots or trigger alarms. Band and other display filters still apply.
+   CC Cluster can search its history directly for single-word comments made
+   of letters and numbers; the node normally returns up to 30 spots.
+   It also requests spotter-call history for suitable callsign text, plus
+   recent filtered history for partial matches. Node support may vary.
+   A numeric Frequency or All fields search also requests a nearby whole-kHz
+   range; local text matching decides which returned spots appear in the list.
+   For numeric DX or spotter country searches, DXSpider also searches history
+   for that exact node country number. Numbers are node-specific; partial
+   numbers and country names may still match only recent node-filtered spots.
+   Wait for results before repeating a search. Each search may send several
+   commands, and a node may disconnect clients that send too many too quickly.
+   For DXSpider the app limits commands across the connection. Search retries
+   a rate-limited node for up to 30 seconds; editing the search or changing its
+   source cancels the wait. Other rejected commands must be retried manually.
+   Limits on nodes may differ; see Activity for request details.
+   DATE / TIME UTC shows the month, day and time; -- means no valid date was
+   reported. Select the spot to see its full date when available.
+   For an undated spot, sorting estimates the day from receipt time. Near
+   midnight it allows up to five minutes for a node clock running ahead;
+   the estimate may be wrong, especially for older undated history.
+   Times use a colon and Z for UTC. Frequencies show two decimal places;
+   additional precision is rounded for display, but the original is retained.
+   The displayed zero does not add precision if the node sends fewer decimal
+   places. The pinned DXSpider enhanced format sends one decimal place.
+   For the main CC Cluster connection, Settings > My node profile can request
+   one or two decimal places or show the current setting. For an additional
+   CC node, select it in Additional nodes and choose Frequency precision.
+   Choosing 1 decimal or 2 decimals requests a node profile change; check the
+   node's Activity response.
+   The ↵ button beside the command field sends the entered command.
+   Use Up and Down in that field to recall commands from the current connection;
+   an unfinished draft is restored when you move past the newest command.
+   Recall is held in memory only and cleared when the connection ends.
+   If the connection ends before the app reports sending a manually entered
+   command, the spot view and Activity warn that delivery is unknown. This
+   also applies to commands in an additional node's Activity window. A send
+   confirmation means the socket accepted the bytes, not that the node accepted
+   the command. Review the node response before retrying. Opening Activity
+   clears the spot-view warning; the Activity record remains.
+   A selected source shows whether that node is connected; older spots can
+   remain visible after it disconnects.
+   If a saved additional node cannot be loaded at startup, Activity and the
+   Additional nodes window report it; add the entry again if needed.
+   Lock scroll keeps the top spot in view while new spots arrive. Unlock it
+   and scroll to the top to follow new spots again.
+   On taller windows, band buttons include WARC, 2 m and 70 cm; their counts
+   use a different color from band labels. Counts are spots retained in the app,
+   including duplicates; they are not node-wide totals.
+   The list retains up to 1,000 spots. When it says "list full", new spots
+   replace the oldest retained spots.
+   On any cluster connection, lines longer than 8,192 characters are skipped;
+   affected readbacks may be incomplete. Check Activity for the notice.
+   Band buttons toggle independently, so you can show several bands at once.
+   The local 60 m group is 5,195–5,450 kHz, following the pinned DXSpider
+   reference and including a beacon below 5,250 kHz. These display groups are
+   not a statement of operating privileges; node band limits may differ.
+   To clear retained spots from selected bands only, select those bands and
+   right-click the trash button (or focus it and press Shift+F10), then choose
+   Clear spots in selected bands.
+   This clears those bands across all sources, including spots hidden by other
+   display filters; it does not delete recordings or change node filters.
+   All returns to the saved display choices; turning off every selected band
+   shows no spots. On shorter windows, use Choose bands in the band selector;
+   its checkboxes show the current selection. Clear selection lets you start
+   a new selection, and Apply without changes preserves the All setting.
+   Selected bands are shown even if hidden in All; other display filters still
+   apply and the saved hidden-band setting is unchanged.
+   If no spots match, the empty view lists active filters. Its Display options
+   button opens the saved band and spotter-marker choices when those apply.
+   Display options also lets you show only spotters marked -# or only unmarked
+   spotters. This changes the display only; not all skimmers use the marker.
+   In Display options, Hide text lets you hide spots containing specified DX
+   callsign, spotter or comment text. Use commas between alternatives; choose
+   Use text, then Apply in Display options. This
+   affects the list only, not node delivery, recordings, loggers or alarms.
+   If display options cannot be saved, they still apply for this session and
+   the display-options summary says not saved. Check Activity for details.
+5. The Filters tab can request node-side filter changes. These affect what
+   the node sends to your account; use Show node filters to review the
+   response. A request alone does not prove the node accepted the change.
+   For a country filter, load a CTY.DAT file in Settings > Country file, then
+   use Choose to select countries by name, prefix or continent. The chooser
+   can select or clear all shown countries without changing hidden selections.
+   The form allows up to 50 values and 200 characters. The chooser fills the
+   values field; it does not send a filter change. Country files
+   can be outdated, and a node may interpret a prefix differently. Review
+   the values and check the node readback after applying the filter.
+   Get CTY.DAT opens the country-file download in your browser; after saving
+   it, select the downloaded file with Choose file in the same window.
+   For a state filter, Choose offers U.S. states, Washington, D.C., and
+   Canadian provinces and territories. Other abbreviations can still be
+   entered manually. The chooser
+   only fills the form; apply the rule and review the node response separately.
+   DXSpider state filtering depends on the node having USDB data. Some
+   versions pass all states when USDB is missing; Canadian coverage depends
+   on the node's data and may be absent.
+   Look up node state asks the selected node for a callsign's state or
+   province and opens Activity for its response. Live traffic can appear there
+   too; a lookup does not prove every filter will behave as expected.
+   If the connection changes while a filter chooser is open, close it and
+   reopen it before selecting values for the new connection.
+   An open readback is marked for refresh after a later filter change request;
+   a readback still in progress is marked incomplete.
+   Full filter-change commands typed manually are also recognized, as are
+   DXSpider command abbreviations; custom aliases and node-side changes may
+   not be. Refresh whenever in doubt.
+   On CC Cluster, country and state spot filters can target one band or All
+   bands. Changing the filter type resets this choice to All bands. Check the
+   node readback after each change; All bands can replace or clear individual
+   band rules, and node versions and band support can differ.
+   On DXSpider, use country prefixes such as K or VE. Numeric country values
+   are node-specific and are not necessarily ARRL DXCC entity codes. Use
+   Find node country number to look up a prefix; CC in the Activity response
+   is the node country number. Other live messages may also appear.
+   For DXSpider spot filters, Band or range starts selected. Choose… lets
+   you select multiple bands; it fills the form without sending a change.
+   Choose Accept matching or Reject matching to request the filter.
+   A live test confirmed a 20 m accept rule by node readback; its subsequent
+   25-spot sample was all 20 m. The test restored the original filter state.
+   This does not prove complete delivery or behavior of other rules.
+   On CC Cluster, passing a listed band or segment does not necessarily
+   block the others. Show node filters and review the full band settings.
+
+On the Alarms tab, * is normally a callsign wildcard. Optionally choose
+Use *prefix as country and load a full CTY.DAT country file in Settings to
+match entries such as *LZ by country. Apply saves the choice. The file can be
+outdated and ambiguous or unknown calls may not match. If the file is missing,
+country-prefix matches are unavailable; ordinary wildcard rules still work.
+If saving alarm settings fails, the Alarms tab says Not saved; the settings
+remain active for this session and a later successful settings save can
+persist them. Check Activity for the error. If another copy changed the alarm,
+reopen the app to review the saved rule before applying changes again.
+Calls, states, frequency ranges and CQ zones use ASCII characters. If an older
+saved alarm contains invalid entries, it is disabled for the session; check
+Activity and correct the entries on the Alarms tab. Country names may use
+international characters.
+
+In Messages, Compose message can send a direct TALK to multiple callsigns.
+Use its saved recipient lists to reuse a group on either CC Cluster or
+DXSpider. Each recipient receives a separate command; the node controls
+delivery. The separate Chat groups feature uses DXSpider-managed groups and
+requires a DXSpider connection.
+
+The app saves your settings in %LOCALAPPDATA%\ClusterDesk\settings.json.
+If settings cannot be loaded, a startup notice says defaults are in use and
+Activity gives details. Invalid settings files are not overwritten on save.
+Passwords are requested when needed and are not saved by the app. Unusual
+password prompts may not be recognized; the connection will time out.
+The sun or
+moon button beside the command entry switches theme; light is the default.
+On the spot view, the circular arrow refreshes spots, the book opens History,
+the globe opens QRZ, the lock controls scroll locking, and the trash can clears
+spots. The monitor opens Display options, the house opens Station info, and
+the book with a pen opens Post a spot. Hover over or focus an icon for its name.
+In History, a DXSpider request defaults to starting one day ago (yesterday),
+so it does not include earlier spots from today. Enter another number of days
+or clear the field to choose a numbered page; some nodes reject pages. The
+request asks for up to 100 node-filtered spots;
+available history and node support vary. A direct days-back request returned
+25 spots on the supplied DXSpider node; a separate app test received 25
+previous-day spots after making the request. Traffic can interleave. Check
+node activity for errors.
+Some DXSpider versions use a “not found” response when a history search has
+no matches; that response alone does not prove the request was rejected.
+In Post a spot, pressing Enter in a field sends the completed spot, just like
+the Send button. A node may distribute it to other users.
+Structured spot, message, chat, filter and profile forms reject the literal
+characters \n where a DXSpider node could interpret them as a command separator.
+If the connection ends before a spot's send confirmation, the app warns that
+delivery is unknown. Check node activity before posting it again. A socket send
+confirmation does not establish that the node accepted or distributed it.
+To protect a password that a node might echo, the app hides the node's login
+response after a password is sent. Spots in that response may be missed;
+the app requests recent history after connecting, but recovery is not guaranteed.
+Auto reconnect waits longer after repeated connection failures or short-lived
+connections, up to 60 seconds. A connection lasting at least 30 seconds resets
+the next retry delay to 2 seconds. Disconnect cancels the pending retry.
+
+When reconnecting a recently used node during this app session, the spot view
+warns that the requested history may include duplicates or leave gaps.
+
+This beta is unsigned. Windows may display a reputation warning. Share it
+only through a channel your testers trust and verify the file with them.
+Feature coverage and compatibility with every node and logger are incomplete.
+Report the node, callsign (if comfortable), steps, and what appeared in the
+Activity tab when something goes wrong; remove passwords or private text.
+In Settings, select About this build and copy its fingerprint into the report
+so the result can be matched to the exact executable.
