@@ -60,6 +60,7 @@ def search_band_label(text):
 def settings_path(frozen=None):
     if frozen is None: frozen = getattr(sys, 'frozen', False)
     if not frozen: return ROOT / 'settings.json'
+    if sys.platform == 'darwin': return Path.home() / 'Library' / 'Application Support' / 'ClusterDesk' / 'settings.json'
     local = os.environ.get('LOCALAPPDATA')
     return (Path(local) if local else Path.home() / 'AppData' / 'Local') / 'ClusterDesk' / 'settings.json'
 

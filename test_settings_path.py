@@ -14,6 +14,10 @@ from settings_store import save_settings, SettingsConflict, settings_lock
 
 
 class SettingsPathTests(unittest.TestCase):
+    def test_frozen_mac_settings_use_application_support(self):
+        with patch.object(app.sys, 'platform', 'darwin'):
+            self.assertEqual(app.settings_path(frozen=True), Path.home() / 'Library' / 'Application Support' / 'ClusterDesk' / 'settings.json')
+
     def test_settings_warning_keeps_core_controls_visible_at_minimum_size(self):
         with tempfile.TemporaryDirectory() as directory:
             path=Path(directory)/'settings.json';path.write_text('{broken',encoding='utf8')

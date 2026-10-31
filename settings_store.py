@@ -1,4 +1,4 @@
-"""Cooperative, conflict-aware settings writes for Windows desktop instances."""
+"""Cooperative, conflict-aware settings writes for desktop instances."""
 import json
 import os
 import tempfile
@@ -23,7 +23,10 @@ def validate_settings_depth(value, maximum=64):
 
 @contextmanager
 def settings_lock(path, timeout=2):
-    import msvcrt
+    if os.name == 'nt':
+        import msvcrt
+    else:
+        import fcntl
     path=Path(path);path.parent.mkdir(parents=True,exist_ok=True)
     fd=os.open(str(path.with_suffix(path.suffix+'.lock')),os.O_RDWR|os.O_CREAT,0o600)
     locked=False
@@ -32,14 +35,21 @@ def settings_lock(path, timeout=2):
         deadline=time.monotonic()+timeout
         while True:
             try:
-                os.lseek(fd,0,os.SEEK_SET);msvcrt.locking(fd,msvcrt.LK_NBLCK,1);locked=True;break
+                if os.name == 'nt':
+                    os.lseek(fd,0,os.SEEK_SET);msvcrt.locking(fd,msvcrt.LK_NBLCK,1)
+                else:
+                    fcntl.flock(fd,fcntl.LOCK_EX | fcntl.LOCK_NB)
+                locked=True;break
             except OSError:
                 if time.monotonic()>=deadline:raise OSError('Another copy is saving settings; try again.')
                 time.sleep(.05)
         yield
     finally:
         if locked:
-            os.lseek(fd,0,os.SEEK_SET);msvcrt.locking(fd,msvcrt.LK_UNLCK,1)
+            if os.name == 'nt':
+                os.lseek(fd,0,os.SEEK_SET);msvcrt.locking(fd,msvcrt.LK_UNLCK,1)
+            else:
+                fcntl.flock(fd,fcntl.LOCK_UN)
         os.close(fd)
 
 

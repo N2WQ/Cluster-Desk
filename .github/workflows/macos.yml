@@ -1,0 +1,37 @@
+name: Build macOS beta
+on:
+  workflow_dispatch:
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-15
+            arch: apple-silicon
+          - runner: macos-15-intel
+            arch: intel
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r build-requirements.txt
+      - name: Verify settings and Tk availability
+        run: |
+          python -c 'import tkinter; import app; print("Tk", tkinter.TkVersion)'
+          python -m unittest test_settings_path.SettingsPathTests.test_settings_lock_blocks_another_process test_settings_path.SettingsPathTests.test_cooperating_writers_preserve_independent_changes test_settings_path.SettingsPathTests.test_frozen_mac_settings_use_application_support
+      - name: Build application
+        run: python -m PyInstaller --noconfirm --onedir --windowed --name ClusterDesk --osx-bundle-identifier com.n2wq.clusterdesk --add-data 'assets/clusterdesk.ico:assets' app.py
+      - name: Package application
+        run: |
+          mkdir package
+          cp -R dist/ClusterDesk.app package/
+          cp MAC-START.txt package/START-HERE.txt
+          cd package
+          ditto -c -k --sequesterRsrc --keepParent . ../ClusterDesk-macOS-${{ matrix.arch }}.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ClusterDesk-macOS-${{ matrix.arch }}
+          path: ClusterDesk-macOS-${{ matrix.arch }}.zip

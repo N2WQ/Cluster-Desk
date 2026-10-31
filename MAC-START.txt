@@ -1,0 +1,10 @@
+CLUSTER DESK BY N2WQ - macOS BETA
+
+Extract the ZIP and move ClusterDesk.app to Applications. Open it and enter
+your own callsign and cluster address. This is a beta and has not been
+notarized by Apple. macOS may block its first launch; use the Privacy &
+Security settings to review the app if you choose to open it.
+
+Settings are saved under ~/Library/Application Support/ClusterDesk.
+The Windows beta guide describes features and limitations; visual appearance
+and system integration on macOS have not yet been fully verified.
