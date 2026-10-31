@@ -2048,6 +2048,7 @@ class App(tk.Tk):
         refresh()
 
     def _start_connection(self):
+        """Start a fresh main-node connection attempt for the current target."""
         if not self.want_connection or not self.connection_target: return
         self.command_history.clear();self.command_history_index=None;self.command_history_draft=''
         self.filter_readback_unresolved=False
@@ -2163,6 +2164,7 @@ class App(tk.Tk):
         self._start_connection()
 
     def _schedule_reconnect(self):
+        """Schedule an enabled main-node retry with a bounded backoff delay."""
         if self.connected_since is not None and time.monotonic()-self.connected_since >= 30:self.retry_streak=0
         self.connected_since=None
         delay = min(60, 2 ** min(self.retry_streak + 1, 6)); self.retry_streak += 1; self.retry_attempt += 1
@@ -2259,6 +2261,7 @@ class App(tk.Tk):
         self.manual_uncertain_notice=True;self.update_spot_recovery_display()
 
     def interrupt_spot_submissions(self,item=None):
+        """Report submissions whose send status became uncertain when a session ended."""
         pending=self.pending_spot_submissions if item is None else item.get('pending_spot_submissions')
         if not pending:return
         count=len(pending);pending.clear()
@@ -2282,6 +2285,7 @@ class App(tk.Tk):
         return 'break'
 
     def queue_spot(self, generation, frequency, call, comment, test=False):
+        """Queue a validated spot only if the original main connection is still current."""
         if generation != self.generation or not self.connection or self.status.get() != 'Connected':
             raise OSError('The cluster connection changed. Close this form and open it again.')
         if test and self.dialect != 'CC Cluster': raise ValueError('Test spots are available only for CC Cluster.')
@@ -2382,6 +2386,7 @@ class App(tk.Tk):
         ttk.Button(buttons,text='Request spots',style='Accent.TButton',command=lambda:request(node.get(),dialog)).pack(side='right',padx=(0,8))
 
     def open_older_spots(self):
+        """Let the operator request older history from a supported connected node."""
         targets = {}
         if self.connection and self.status.get() == 'Connected' and self.dialect == 'DXSpider':
             label = 'Main connection' + (f' · {self.connection_target[0]}:{self.connection_target[1]}' if self.connection_target else '')
@@ -2452,6 +2457,7 @@ class App(tk.Tk):
         ttk.Button(buttons, text='Request spots', style='Accent.TButton', command=submit).pack(side='right', padx=(0, 8))
 
     def request_spot_history(self, generation, call, mode='Callsign'):
+        """Submit a history request only for the connection that opened the form."""
         if generation != self.generation or not self.connection or self.status.get() != 'Connected':
             raise OSError('The cluster connection changed. Close this form and open it again.')
         self.connection.send(history_command(self.dialect, call, mode))
@@ -3607,6 +3613,7 @@ class App(tk.Tk):
         self.open_filter_readback()
 
     def show_filters(self):
+        """Request the main node's filter readback for the operator to inspect."""
         try:
             if not self.connection or self.status.get() != 'Connected': raise OSError('Connect to a cluster first.')
             if self.filter_readback.state in ('queued', 'waiting', 'receiving'): raise OSError('A filter readback is already in progress.')
@@ -3636,6 +3643,7 @@ class App(tk.Tk):
         self.render_filter_readback(); self.filter_window.lift()
 
     def render_filter_readback(self):
+        """Show captured filter text and whether the readback is complete or partial."""
         if self.filter_window is None or not self.filter_window.winfo_exists(): return
         capture = self.filter_readback
         status = {'queued':'Waiting to send…', 'waiting':'Waiting for a recognized response…', 'receiving':'Receiving…', 'complete':'Response ended.', 'partial':'Partial or ambiguous response.', 'idle':'No response.'}[capture.state]
@@ -3650,21 +3658,25 @@ class App(tk.Tk):
         self.filter_readback_text.yview_moveto(position)
 
     def interrupt_filter_readback(self):
+        """Mark an outstanding main-node readback partial when it is interrupted."""
         if self.filter_readback.state in ('queued','waiting','receiving'):self.filter_readback_unresolved=True
         self.filter_readback.interrupt(); self.filter_deadline = None
         self.render_filter_readback()
 
     def note_filter_change(self):
+        """Mark prior filter information stale after a possible node-side change."""
         if self.filter_readback.state in ('queued','waiting','receiving'):self.interrupt_filter_readback()
         elif self.filter_readback.state in ('complete','partial'):
             self.filter_readback.stale=True;self.render_filter_readback()
 
     def end_filter_session(self):
+        """Finish or interrupt filter readback when the main connection ends."""
         self.interrupt_filter_readback()
         if self.filter_readback.state in ('complete','partial'):
             self.filter_readback.session_ended=True;self.render_filter_readback()
 
     def change_filter(self, action):
+        """Validate and queue a main-node filter change; readback confirms node state."""
         try:
             if not self.connection or self.status.get() != 'Connected': raise OSError('Connect to a cluster first.')
             if self.dialect == 'CC Cluster':
@@ -4443,26 +4455,31 @@ class App(tk.Tk):
             if error: self.append('\n' + error + '\n')
 
     def sort_spots(self, column):
+        """Change the table's display order without changing stored spots or node data."""
         if column not in self.spot_headings: return
         if column == self.spot_sort_column: self.spot_sort_descending = not self.spot_sort_descending
         else: self.spot_sort_column = column; self.spot_sort_descending = column == 'time'
         self.render_spots()
 
     def reset_spot_filters(self):
+        """Reset search, band and source choices that can hide retained spots."""
         self.search.set('');self.search_field.set('All fields');self.band.set('All bands')
         self.spot_source_filter.set('All sources');self.render_spots()
 
     def spot_search_changed(self, *_):
+        """Apply local search changes and cancel obsolete pending node requests."""
         self.cancel_pending_spot_searches()
         self.spot_search_note.set('Type to filter; press Enter to search nodes. Rapid repeats may disconnect.')
         self.render_spots()
 
     def spot_search_source_changed(self, *_):
+        """Update source display and cancel retries for a previous search selection."""
         self.cancel_pending_spot_searches()
         self.spot_search_note.set('Press Enter to search the selected connected sources.')
         self.update_spot_source()
 
     def cancel_pending_spot_searches(self):
+        """Cancel delayed node searches so outdated queries are not sent later."""
         for request in self.pending_spot_searches.values():
             self.after_cancel(request['after'])
         if self.pending_spot_searches and not self.closing:
@@ -4479,6 +4496,7 @@ class App(tk.Tk):
         else:self.spot_search_note.set(f'{sent} node(s) queued · results may arrive later.')
 
     def retry_spot_search(self, source, request):
+        """Retry a rate-limited search only while its connection and deadline remain valid."""
         if self.pending_spot_searches.get(source) is not request:return
         connection=request['connection']
         current=(self.connection is connection and self.status.get()=='Connected' and self.spot_source==source and self.dialect==request['dialect'])

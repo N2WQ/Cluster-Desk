@@ -19,7 +19,9 @@ HEADER = ('received_utc', 'host', 'port', 'login', 'date', 'time_utc',
 
 
 class SpotLog:
+    """Record received spots asynchronously without blocking the UI on disk writes."""
     def __init__(self, path, capacity=4096, append=False):
+        """Create a new recording or validate an existing one before resuming it."""
         # New recordings use exclusive creation; append opens an existing file only.
         self.base_path=Path(path);self.current_path=str(self.base_path);self.next_part=2;self.record_count=0
         self.file = open(path, 'r+' if append else 'x', encoding='utf-8', newline='')
@@ -52,6 +54,7 @@ class SpotLog:
         self.thread.start()
 
     def publish(self, spot, source):
+        """Queue a spot and its source for recording, subject to bounded capacity."""
         with self.lock:
             if self.stopping: return False
             host, port, call = source or ('', '', '')
@@ -73,9 +76,11 @@ class SpotLog:
             return True
 
     def stop(self):
+        """Request a graceful stop after already queued records are processed."""
         with self.lock: self.stopping = True
 
     def _rotate(self):
+        """Continue a full recording in a new part without overwriting existing files."""
         self.file.close()
         while self.next_part <= 99999:
             path=self.base_path.with_name(f'{self.base_path.stem}.part-{self.next_part:04d}{self.base_path.suffix}')
@@ -89,6 +94,7 @@ class SpotLog:
         raise OSError('No unused recording continuation filename is available')
 
     def _run(self):
+        """Write queued records and report errors to the UI through shared state."""
         try:
             while True:
                 with self.lock: done = self.stopping and self.queue.empty()

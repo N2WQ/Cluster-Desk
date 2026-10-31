@@ -30,17 +30,26 @@ def is_filter_change(command, dialect):
 
 
 class FilterReadback:
+    """Collect a bounded, best-effort view of a node's filter response."""
     def __init__(self):
+        """Start with no active request or captured response."""
         self.state = 'idle'; self.lines = []; self.chars = 0; self.truncated = False; self.dialect = ''; self.command = None; self.call = ''; self.ambiguous = False; self.bandtime = False; self.stale = False; self.session_ended = False
 
     def queued(self, dialect, call='', *, bandtime=False):
+        """Reset capture for a new request and remember which response is relevant."""
         self.state = 'queued'; self.lines = []; self.chars = 0; self.truncated = False; self.ambiguous = False; self.stale = False; self.session_ended = False
         self.dialect = dialect; self.call = call.strip().upper(); self.bandtime = bandtime
 
     def sent(self):
+        """Begin waiting for a response only after the request is sent."""
         if self.state == 'queued': self.state = 'waiting'
 
     def feed(self, line):
+        """Capture recognized response lines until the prompt or size limit.
+
+        Return whether the line belongs to this capture. A complete capture
+        can still contain interleaved traffic from the node.
+        """
         if self.state not in ('waiting', 'receiving'): return False
         line = line.rstrip('\r')
         if self.state == 'waiting':
@@ -59,6 +68,9 @@ class FilterReadback:
         return True
 
     def interrupt(self):
+        """Mark an unfinished response partial when its session is interrupted."""
         if self.state in ('queued', 'waiting', 'receiving'): self.state = 'partial'
 
-    def text(self): return '\n'.join(self.lines)
+    def text(self):
+        """Return captured node text for display without claiming completeness."""
+        return '\n'.join(self.lines)
