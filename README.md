@@ -1,12 +1,14 @@
 # Cluster Desk by N2WQ
 
-Cluster Desk is a standalone Windows DX cluster client inspired by VE7CC / CC User. It connects to CC Cluster and DXSpider nodes, displays and searches spots, and provides node filter controls. The interface supports light and dark themes.
+Cluster Desk is a standalone DX cluster client inspired by VE7CC / CC User. It connects to CC Cluster and DXSpider nodes, displays and searches spots, and provides node filter controls. The interface supports light and dark themes.
 
 **Beta:** This is a work in progress, not yet a complete VE7CC replacement. Use it for evaluation alongside your usual operating tools.
 
 ## Download
 
 Download the Windows ZIP from [Releases](../../releases), extract it, and open `ClusterDesk.exe`. Python is not required. See the included `START-HERE.txt` and `BETA-GUIDE.txt` for instructions and known limitations.
+
+Experimental macOS downloads are also available for Apple silicon and Intel. They are not Apple-notarized, and the graphical app and live cluster workflows have not yet been tested on a Mac; macOS may block the first launch. Choose the ZIP for your Mac's processor and read the included guide.
 
 ## Run from source
 
