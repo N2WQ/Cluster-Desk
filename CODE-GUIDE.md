@@ -1,5 +1,9 @@
 # Code guide
 
+For a generated inventory of modules, imports, classes and functions, see the
+[code map](docs/code-maps/cluster-desk.md). Regenerate it with
+`python tools/code_map.py` and check freshness with `python tools/code_map.py --check`.
+
 Cluster Desk is a Tkinter desktop client. Its purpose is to let an operator
 connect to CC Cluster and DXSpider nodes, inspect incoming spots, and manage
 supported node interactions. The application is still a beta; a command being
